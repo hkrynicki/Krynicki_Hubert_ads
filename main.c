@@ -4,9 +4,15 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+const int gameSize = 3;
+const char rows[3] = {'A','B','C'};
+const char cols[3] = {'1','2','3'};
+
+
 const char marks[2] = {'X','O'}; 
 const char *defaultPlayer1 = "Player1";
 const char *defaultPlayer2 = "Player2";
+
 
 struct player{
     char name[20];
@@ -15,13 +21,16 @@ struct player{
 };
 
 struct gameboard{
-    unsigned int size;
-
+    int size;    
+    char rows[3];
+    char col[3];
 };
-void printGameboard(struct gameboard gb){
-    printf("Game size = %u x %u", gb.size, gb.size);
+void printGameboard(struct gameboard gb,struct player p1, struct player p2){
+    printf("\n%s  -  '%c'",p1.name, p1.mark);
+    printf("\n%s  -  '%c'",p2.name, p2.mark);    
+    printf("\n\nGame size = %u x %u\n\n", gb.size, gb.size);
 
-
+    
 }
 //Usability methods
 /**
@@ -31,11 +40,7 @@ void printGameboard(struct gameboard gb){
  * @param string to be checked
  * @return boolean 
 */
-bool isEmpty(char s[]){
-    //Check if control character is first character(common input issue)
-    if(iscntrl(s[0])){            
-            return true;
-    }
+bool isEmpty(char s[]){    
     //Useful if string contain white-spaces
     bool containsAnyLetter = false;
     for(int i = 0; i < strlen(s) - 1 ; i++){
@@ -55,6 +60,17 @@ bool isEmpty(char s[]){
     return false;
 };
 /**
+ * Remove newLine from string, especially useful after fgets
+ * 
+ * @param string to be modified
+*/
+void removeNewLineFromString(char s[]){
+    int len = strlen(s);
+    if(s[len-1] == '\n'){
+        s[len-1] = 0;
+    }
+}
+/**
  * Check if char is valid mark
  * 
  * @param char to be checked
@@ -69,39 +85,47 @@ char isValidMark(char c){
     }
     return 127;
 };
+/**
+ * Clear input stream
+*/
 void flushStdin(){
     char temp;    
     while((temp = getchar()) != '\n' && temp != EOF){
     }
 }
+/**
+ * Ask players for names and assign marks
+ * 
+ * @param struct player : p1, p2  
+*/
 void determinePlayers(struct player *p1, struct player *p2){
 
     //Player1
     printf("Welcome, Player 1 please insert your name:   ");    
     fgets((*p1).name, 20, stdin);
+    removeNewLineFromString((*p1).name);
     if(isEmpty((*p1).name)){
         strcpy((*p1).name, defaultPlayer1);
-        printf("\nInserted name is not valid, you have been assigned name 'Player 1'\n");    
-    }
+        printf("Inserted name is not valid, you have been assigned name 'Player 1'\n");    
+    }  
+    
 
-    char temp[2];
-    printf("\nWould you like noughts('O') or crosses('X')? \nEnter 'O' or 'X':    ");    
-    fgets(temp, 2, stdin);    
-    if(isValidMark(temp[0]) == 127){
+    printf("Would you like noughts('O') or crosses('X')? \nEnter 'O' or 'X':    ");      
+    (*p1).mark = getchar();
+    (*p1).mark = isValidMark((*p1).mark);    
+    if((*p1).mark == 127){
         (*p1).mark = marks[0];
         printf("\nInserted character is invalid, you have been assigned crosses 'X'\n");
-    }
-    else{
-        (*p1).mark = isValidMark(temp[0]);
-    }
+    }    
 
     //Player2
-    printf("Player 2 please insert your name:   ");
+    printf("\nPlayer 2 please insert your name:   ");
     flushStdin();
-    fgets((*p2).name, 20, stdin);    
+    fgets((*p2).name, 20, stdin);
+    removeNewLineFromString((*p2).name);    
     if(isEmpty((*p2).name)){
         strcpy((*p2).name, defaultPlayer2);
-        printf("\nInserted name is not valid, you have been assigned name 'Player 2'\n"); 
+        printf("Inserted name is not valid, you have been assigned name 'Player 2'\n"); 
     }
     //If Player1 chose crosses than Player2 will be assigned noughts
     if((*p1).mark == marks[0]){
@@ -110,24 +134,26 @@ void determinePlayers(struct player *p1, struct player *p2){
     else{
         (*p2).mark = marks[0];
     }
-    printf("\nYou have been assigned %c\n",(*p2).mark);
+    printf("You have been assigned %c\n",(*p2).mark);
 }
 int main()
 {
-    printf("\n\n----------------Game started---------------- \n\n");
+    printf("\n\n---------------------Game started--------------------- \n\n");
     struct player p1 = {*defaultPlayer1, marks[0], false};
     struct player p2 = {*defaultPlayer2, marks[1], false};
+    struct gameboard gb = {gameSize, };    
     
+
     determinePlayers(&p1, &p2);
-    printf("\n%s\n",p1.name);
+    printGameboard(gb, p1, p2);
+    
 
-    struct gameboard gb;    
-    gb.size =3;
-    printGameboard(gb);
+    
+    
 
 
 
-    printf("\n\n----------------Game finished---------------- \n\n");
+    printf("\n\n---------------------Game finished--------------------- \n\n");
     return 0;
 }
 
