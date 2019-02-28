@@ -1,5 +1,5 @@
 game:
-	cl main.c
+	cl main.c stack.c utils.c
 	main.exe
 	nmake clean
 clean:
