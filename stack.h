@@ -1,2 +1,3 @@
 int pushToStack(int fieldNumber);
-int popFromStack();
+int popFromUndoStack();
+int redoFromRedoStack();

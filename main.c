@@ -45,7 +45,8 @@ void printStartMenu(){
 }
 void printGameMenu(){
     printf("\n %s turn\n Choose field by writing 'A1', '2C' etc\n", currentPlayer.name);
-    printf(" or type 'undo' to reverse one move \n");
+    printf(" or type 'undo' to revert one move \n");
+    printf(" or type 'redo' to cancel revert \n");
     printf(" or type 'exit' to finish :   ");
 }
 
@@ -173,9 +174,9 @@ void applyMarkToGameBoard(int fieldNum){
  * 
  * @return true if revert was succesfull
 */
-bool revertTurn(){
+bool undoTurn(){
     if(turn > 1){
-        int fieldNum = popFromStack();
+        int fieldNum = popFromUndoStack();
         gb.fields[fieldNum].mark = ' ';
         turn = turn - 2;
         return true;
@@ -183,6 +184,20 @@ bool revertTurn(){
     printf(" No moves to revert, choose other option :  ");
     return false;   
 
+}
+/**
+ * Cancel revert
+ * 
+ * @return true if redo was succesfull
+*/
+bool redoTurn(){
+    int fieldNum = popFromRedoStack();
+    if(fieldNum != -1){
+        gb.fields[fieldNum].mark = currentPlayer.mark;
+        return true;
+    }
+    printf(" Redo not available, choose other option :  ");
+    return false;   
 }
 /**
  * Check if field is not already marked
@@ -243,12 +258,8 @@ int main()
         printPlayers(p1, p2);
         printGameboard(gb);
         //If move will be invalid app will ask for new input
-        bool moveIsV
-        void printStartMenu(){
-            printf(" Welcome to final and superior TicTacToe game, choose : \n");
-            printf(" 1 - to start game\n");
-            printf(" 2 - to ")
-        }alid;
+        bool moveIsValid;
+        
         printGameMenu();
         do{                    
             fgets(field, 5, stdin);
@@ -275,7 +286,10 @@ int main()
                 exit = true;                
             }
             else if(strcmp(field, "undo") == 0 || strcmp(field, "UNDO") == 0){
-                moveIsValid = revertTurn();
+                moveIsValid = undoTurn();
+            }
+            else if(strcmp(field, "redo") == 0 || strcmp(field, "REDO") == 0){
+                moveIsValid = redoTurn();
             }
             else{
                 printf(" Please insert correct field number :   ");

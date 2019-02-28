@@ -1,38 +1,58 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-
-const int maxSize = 8;
-int stack[9];
-int top = -1;
+struct stack{
+    const int maxSize;    
+    int top;
+    int stack[9];
+};
+struct stack undoStack = {8, -1};
+struct stack redoStack = {8, -1};
 
 bool isEmpty(){
-    if(top == -1){
+    if(undoStack.top == -1){
         return true;
     }
     return false;
 }
 bool isFull(){
-    if(top == maxSize){
+    if(undoStack.top == undoStack.maxSize){
         return true;
     }
     return false;
 }
-void pushToStack(int fieldNumber){    
+void pushToStack(int fieldNumber){
+    redoStack.top = -1;    
     if(!isFull()){
-        top++;
-        stack[top] = fieldNumber;         
+        undoStack.top++;
+        undoStack.stack[undoStack.top] = fieldNumber;            
     }
     else{
         printf("Can't insert element, stack is full\n");
-    }
-    
+    }    
 }
-int popFromStack(){
+int popFromUndoStack(){
     if(!isEmpty()){
-        top--;
-        return stack[top+1];
-    }
-    printf("No moves to undo");
+        int fieldNumber = undoStack.stack[undoStack.top];
+
+        redoStack.top++;
+        redoStack.stack[redoStack.top] = fieldNumber;     
+
+        undoStack.top--;
+        return fieldNumber;
+    }    
     return -1;
 }
+int popFromRedoStack(){
+    if(redoStack.top > -1){
+        int fieldNumber = redoStack.stack[redoStack.top];
+        redoStack.top--;
+
+        undoStack.top++;
+        undoStack.stack[undoStack.top] = fieldNumber;
+
+        return fieldNumber;
+    }    
+    return -1;
+}
+
