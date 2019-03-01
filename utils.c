@@ -1,7 +1,44 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
 
 //Usability methods
+
+
+/**
+ * Writes info, action or move details to txt file
+ * 
+ * @param 
+ *  Required - type of action(string)
+ *  Optional - fieldNum(int), mark(char), playerName(string)
+*/
+void addToHistoryFile(char *action, ...){        
+    FILE *file;
+    file = fopen("./data/history.txt", "a");    
+
+    va_list v;
+    va_start(v, action);    
+    if(strcmp(action,"HEADER") == 0){
+        char *pName = va_arg(v, char*);
+        char mark = va_arg(v, char);
+        fprintf(file, "%s - %c\n", pName, mark);
+    }
+    else if(strcmp(action,"MOVE") != 0){
+        fprintf(file, "%s\n",action);
+    }
+    else{        
+        int fieldNum = va_arg(v, int);
+        char mark = va_arg(v, char);
+        char *playerName = va_arg(v, char*);
+        fprintf(file, "%u %c %s \n", fieldNum, mark, playerName);   
+    }
+    fclose(file);     
+}
+
+
+
+
 /**
  * Check if string is empty - 
  *      containes nothing except spaces and control characters

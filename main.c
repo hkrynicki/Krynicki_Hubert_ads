@@ -167,6 +167,7 @@ void calcCurrentPlayer(int turn){
 void applyMarkToGameBoard(int fieldNum){    
     gb.fields[fieldNum].mark = currentPlayer.mark;   
 
+    addToHistoryFile("MOVE", fieldNum, currentPlayer.mark, currentPlayer.name);
     pushToStack(fieldNum);              
 }
 /**
@@ -176,6 +177,7 @@ void applyMarkToGameBoard(int fieldNum){
 */
 bool undoTurn(){
     if(turn > 1){
+        addToHistoryFile("UNDO");
         int fieldNum = popFromUndoStack();
         gb.fields[fieldNum].mark = ' ';
         turn = turn - 2;
@@ -190,9 +192,10 @@ bool undoTurn(){
  * 
  * @return true if redo was succesfull
 */
-bool redoTurn(){
+bool redoTurn(){    
     int fieldNum = popFromRedoStack();
     if(fieldNum != -1){
+        addToHistoryFile("REDO");
         gb.fields[fieldNum].mark = currentPlayer.mark;
         return true;
     }
@@ -251,8 +254,12 @@ int main()
     printf("\n\n---------------------Game started--------------------- \n\n");    
        
     determinePlayers();
-    bool exit = false;        
-    do{    
+    bool exit = false;  
+    addToHistoryFile("START_HEADER");
+    addToHistoryFile("HEADER",p1.name, p1.mark);
+    addToHistoryFile("HEADER",p2.name, p2.mark);     
+    addToHistoryFile("START_GAME");          
+    do{          
         char field[5];
         calcCurrentPlayer(turn);       
         printPlayers(p1, p2);
@@ -286,7 +293,7 @@ int main()
                 exit = true;                
             }
             else if(strcmp(field, "undo") == 0 || strcmp(field, "UNDO") == 0){
-                moveIsValid = undoTurn();
+                moveIsValid = undoTurn();                
             }
             else if(strcmp(field, "redo") == 0 || strcmp(field, "REDO") == 0){
                 moveIsValid = redoTurn();
@@ -303,7 +310,7 @@ int main()
             exit = true;
         }
     }while(exit != true);    
-    
+    addToHistoryFile("END_GAME");
     
 
 
