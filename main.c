@@ -41,7 +41,7 @@ void printStartMenu(){
     printf(" Welcome to final and superior TicTacToe game, choose : \n");
     printf(" 1 - to start new game\n");
     printf(" 2 - to replay one of old matches\n");
-    printf(" You choose : ");
+    printf(" Your choice : ");
 }
 void printGameMenu(){
     printf("\n %s turn\n Choose field by writing 'A1', '2C' etc\n", currentPlayer.name);
@@ -252,65 +252,72 @@ bool didAnyoneWin(){
 int main()
 {
     printf("\n\n---------------------Game started--------------------- \n\n");    
-       
-    determinePlayers();
-    bool exit = false;  
-    addToHistoryFile("START_HEADER");
-    addToHistoryFile("HEADER",p1.name, p1.mark);
-    addToHistoryFile("HEADER",p2.name, p2.mark);     
-    addToHistoryFile("START_GAME");          
-    do{          
-        char field[5];
-        calcCurrentPlayer(turn);       
-        printPlayers(p1, p2);
-        printGameboard(gb);
-        //If move will be invalid app will ask for new input
-        bool moveIsValid;
+    printStartMenu();
+    char choice = getchar();
+    flushAfterChar(choice);
+    if(choice == '2' && readTitlesFromHistoryFile() == true){
         
-        printGameMenu();
-        do{                    
-            fgets(field, 5, stdin);
-            flushAfterString(field);
+    }
+    else{
+        determinePlayers();
+        bool exit = false;  
+        addToHistoryFile("START_HEADER");
+        addToHistoryFile("HEADER",p1.name, p1.mark);
+        addToHistoryFile("HEADER",p2.name, p2.mark);     
+        addToHistoryFile("START_GAME");          
+        do{          
+            char field[5];
+            calcCurrentPlayer(turn);       
+            printPlayers(p1, p2);
+            printGameboard(gb);
+            //If move will be invalid app will ask for new input
+            bool moveIsValid;
+            
+            printGameMenu();
+            do{                    
+                fgets(field, 5, stdin);
+                flushAfterString(field);
 
-            int fieldNum = validateMarkInput(field);
-            if(fieldNum != -1){                
-                if(fieldNotMarked(fieldNum)){
-                    moveIsValid = true;
-                    applyMarkToGameBoard(fieldNum);                    
-                    if(didAnyoneWin()){
-                        printGameboard();
-                        printf(" %s congratulations! You won\n", currentPlayer.name);
-                        exit = true;
+                int fieldNum = validateMarkInput(field);
+                if(fieldNum != -1){                
+                    if(fieldNotMarked(fieldNum)){
+                        moveIsValid = true;
+                        applyMarkToGameBoard(fieldNum);                    
+                        if(didAnyoneWin()){
+                            printGameboard();
+                            printf(" %s congratulations! You won\n", currentPlayer.name);
+                            exit = true;
+                        }
                     }
+                    else{
+                        printf(" Choose other field, this is already marked :   ");
+                        moveIsValid = false;
+                    }                
+                }
+                else if(strcmp(field, "exit") == 0 || strcmp(field, "EXIT") == 0){
+                    moveIsValid = true;
+                    exit = true;                
+                }
+                else if(strcmp(field, "undo") == 0 || strcmp(field, "UNDO") == 0){
+                    moveIsValid = undoTurn();                
+                }
+                else if(strcmp(field, "redo") == 0 || strcmp(field, "REDO") == 0){
+                    moveIsValid = redoTurn();
                 }
                 else{
-                    printf(" Choose other field, this is already marked :   ");
+                    printf(" Please insert correct field number :   ");
                     moveIsValid = false;
-                }                
+                }
+            }while(!moveIsValid);
+            
+            turn += 1;
+            if(turn == 10){
+                printf(" Game finished in a tie");
+                exit = true;
             }
-            else if(strcmp(field, "exit") == 0 || strcmp(field, "EXIT") == 0){
-                moveIsValid = true;
-                exit = true;                
-            }
-            else if(strcmp(field, "undo") == 0 || strcmp(field, "UNDO") == 0){
-                moveIsValid = undoTurn();                
-            }
-            else if(strcmp(field, "redo") == 0 || strcmp(field, "REDO") == 0){
-                moveIsValid = redoTurn();
-            }
-            else{
-                printf(" Please insert correct field number :   ");
-                moveIsValid = false;
-            }
-        }while(!moveIsValid);
-        
-        turn += 1;
-        if(turn == 10){
-            printf(" Game finished in a tie");
-            exit = true;
-        }
-    }while(exit != true);    
-    addToHistoryFile("END_GAME");
+        }while(exit != true);    
+        addToHistoryFile("END_GAME");
+    } 
     
 
 
