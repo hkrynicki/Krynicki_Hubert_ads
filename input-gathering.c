@@ -183,7 +183,7 @@ int centralInputGatheringUnit(int option, ...){
         fgets(achoice, 5, stdin);
         flushAfterString(achoice);
         int fieldNum = validateMarkInput(achoice);
-        if(strcmp(achoice, "exit") == 0 || strcmp(achoice, "EXIT") == 0){
+        if(strcmp(achoice, "0") == 0 || strcmp(achoice, "0") == 0){
             return 11;
         }
         else if(strcmp(achoice, "redo") == 0 || strcmp(achoice, "REDO") == 0){

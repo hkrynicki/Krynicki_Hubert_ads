@@ -41,13 +41,13 @@ void printGameboard(){
 
     printf("\n\n      %c     %c     %c\n", cols[0], cols[1], cols[2]);
     printf("         |     |     \n");
-    printf("  %c   %c  |  %c  |  %c  \n",rows[0], gb.fields[0].mark, gb.fields[1].mark, gb.fields[2].mark);
+    printf("  %c   %c  |  %c  |  %c  \n",rows[0], gb.fields[0], gb.fields[1], gb.fields[2]);
     printf("    _____|_____|_____\n");
     printf("         |     |     \n");
-    printf("  %c   %c  |  %c  |  %c  \n",rows[1], gb.fields[3].mark, gb.fields[4].mark, gb.fields[5].mark);
+    printf("  %c   %c  |  %c  |  %c  \n",rows[1], gb.fields[3], gb.fields[4], gb.fields[5]);
     printf("    _____|_____|_____\n");
     printf("         |     |     \n");
-    printf("  %c   %c  |  %c  |  %c  \n",rows[2], gb.fields[6].mark, gb.fields[7].mark, gb.fields[8].mark);
+    printf("  %c   %c  |  %c  |  %c  \n",rows[2], gb.fields[6], gb.fields[7], gb.fields[8]);
     printf("         |     |     \n\n");
     
 }
@@ -62,14 +62,14 @@ void printGameMenu(){
     printf("\n %s turn\n Choose field by writing 'A1', '2C' etc\n", currentPlayer.name);
     printf(" or type 'undo' to revert one move \n");
     printf(" or type 'redo' to cancel revert \n");
-    printf(" or type 'exit' to finish :   ");
+    printf(" or type '0' to finish :   ");
 }
 /**
  * Remove all marks from gameboard, clean stacks, reset turn counter
 */
 void cleanAfterMatch(){
     for(int i = 0; i < 9; i++){
-        gb.fields[i].mark = ' ';
+        gb.fields[i] = ' ';
     }
     cleanBothStacks();
     turn = 1;
@@ -123,9 +123,9 @@ void calcCurrentPlayer(int turn){
     if(turn == 1 || turn == 3 || turn == 5 || turn == 7 || turn == 9){
             currentPlayer = p1;
         }        
-        else{
-            currentPlayer = p2;
-        } 
+    else{
+        currentPlayer = p2;
+    } 
 }
 /**
  * Mark field in gameboard, push field number to stack
@@ -133,7 +133,7 @@ void calcCurrentPlayer(int turn){
  * @param gameboard, field to mark, mark type
 */
 void applyMarkToGameBoard(int fieldNum){    
-    gb.fields[fieldNum].mark = currentPlayer.mark;    
+    gb.fields[fieldNum] = currentPlayer.mark;    
     pushToStack(fieldNum);              
 }
 /**
@@ -144,7 +144,7 @@ void applyMarkToGameBoard(int fieldNum){
 bool undoTurn(){
     if(turn > 1){        
         int fieldNum = popFromUndoStack();
-        gb.fields[fieldNum].mark = ' ';
+        gb.fields[fieldNum] = ' ';
         turn = turn - 2;
         return true;
     }
@@ -160,7 +160,7 @@ bool undoTurn(){
 bool redoTurn(){    
     int fieldNum = popFromRedoStack();
     if(fieldNum != -1){        
-        gb.fields[fieldNum].mark = currentPlayer.mark;
+        gb.fields[fieldNum] = currentPlayer.mark;
         return true;
     }
     printf(" Redo not available, choose other option :  ");
@@ -173,7 +173,7 @@ bool redoTurn(){
  * @return true if field is not marked
 */
 bool fieldNotMarked(int fieldNum){
-    char c = gb.fields[fieldNum].mark;
+    char c = gb.fields[fieldNum];
     if(c != 'X' && c != 'O'){
         return true;
     }
@@ -189,24 +189,24 @@ bool didAnyoneWin(){
     for(char c = 'O'; c <= 'X'; c = c + 9){
             //Check rows
         for(int i = 0; i<7; i = i + 3){
-            if(gb.fields[i].mark == c && gb.fields[i+1].mark ==  c && gb.fields[i+2].mark == c){
+            if(gb.fields[i] == c && gb.fields[i+1] ==  c && gb.fields[i+2] == c){
                 return true;
             }
         }
         //Check columns
         for(int i = 0; i < 3; i++){
-            if(gb.fields[i].mark ==  c && gb.fields[i+3].mark == c && gb.fields[i+6].mark == c){
+            if(gb.fields[i] ==  c && gb.fields[i+3] == c && gb.fields[i+6] == c){
                 return true;
             }
         }
         //Check diagonal
         for(int i = 0; i < 3; i = i + 3){
-            if(gb.fields[i].mark == c && gb.fields[i+4].mark == c && gb.fields[i+8].mark == c){
+            if(gb.fields[i] == c && gb.fields[i+4] == c && gb.fields[i+8] == c){
                 return true;
             }
         }
         for(int i = 6; i > 3; i = i - 3){
-            if(gb.fields[i].mark ==  c && gb.fields[i-2].mark  == c && gb.fields[i-4].mark == c){
+            if(gb.fields[i] ==  c && gb.fields[i-2]  == c && gb.fields[i-4] == c){
                 return true;
             }
         }
@@ -282,10 +282,10 @@ void readGameDetailsFromHistoryFile(int line){
                 gameplay = realloc(gameplay, (initialSize+index+1) * sizeof(struct single_move_details));                
             }
             gameplaySize++;
-            if(strcmp(temp,"UNDO\n") == 0){
+            if(strcmp(temp,"UNDO\n") == 0 || strcmp(temp,"UNDO") == 0){
                 strcpy(gameplay[index].action,"UNDO");                
             }
-            else if(strcmp(temp,"REDO\n") == 0){
+            else if(strcmp(temp,"REDO\n") == 0 || strcmp(temp,"REDO") == 0){
                 strcpy(gameplay[index].action,"REDO");
             }
             else{                
@@ -295,7 +295,6 @@ void readGameDetailsFromHistoryFile(int line){
             index++;
         }        
     }
-
     fclose(stream);
 }
 
@@ -385,29 +384,34 @@ int main()
                     strcpy(p2.name,catalog[choice].name2);                   
                     p1.mark = catalog[choice].mark1;
                     p2.mark = catalog[choice].mark2;
-                    for(int i = 0; i < gameplaySize; i++){
-                        printf("\n Enter 0 to stop, anything else to continue");
+                    if(gameplaySize == 0){
+                        printf(" Game was terminated before first move\n");
+                    }
+                    for(int i = 0; i < gameplaySize; i++){                        
+                        printf("\n Enter 0 to stop, anything else to continue :  ");
                         char c = centralInputGatheringUnit(STOP_REPLAY);
                         if(c == '0'){
                             break;
-                        }                      
-                        calcCurrentPlayer(turn);                           
-                        if(strcmp(gameplay[i].action, "UNDO") == 0){
+                        }                                             
+                        calcCurrentPlayer(turn);                                                                          
+                        if(strcmp(gameplay[i].action, "UNDO") == 0){                                                        
                             bool temp1 = undoTurn();
+                            calcCurrentPlayer(turn - 1);                            
                         }
-                        else if(strcmp(gameplay[i].action, "REDO") == 0 ){
+                        else if(strcmp(gameplay[i].action, "REDO") == 0 ){                            
                             bool temp2 = redoTurn();
+                            calcCurrentPlayer(turn - 1);                             
                         }
-                        else{
+                        else{                            
                             int fieldNum = gameplay[i].field;
-                            gb.fields[fieldNum].mark = currentPlayer.mark;
+                            gb.fields[fieldNum] = currentPlayer.mark;
                             pushToStack(fieldNum);   
                         }
-                        printPlayers(p1, p2);
+                        printf(" %s '%c'  -  %s", currentPlayer.name, currentPlayer.mark, gameplay[i].action);                        
                         printGameboard(gb);
                         turn++;
                     }
-                    if(didAnyoneWin()){                        
+                    if(didAnyoneWin()){
                         printf(" %s congratulations! You won\n", currentPlayer.name);                        
                     }
                     else if(turn == 10){

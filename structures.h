@@ -7,7 +7,7 @@ struct gamefield{
 };
 struct gameboard{
     int size;        
-    struct gamefield fields[9];        
+    char fields[9];        
 };
 
 struct single_move_details{
