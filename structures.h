@@ -2,19 +2,14 @@ struct player{
     char name[20];
     char mark;       
 };
-struct gamefield{    
-    char mark;
-};
 struct gameboard{
     int size;        
     char fields[9];        
 };
-
 struct single_move_details{
     char action[5];
     int field;   
 };
-
 struct single_game_info{
     int id;
     int lineNumber;
