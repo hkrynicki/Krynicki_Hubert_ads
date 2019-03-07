@@ -9,12 +9,6 @@ struct stack{
 struct stack undoStack = {8, -1};
 struct stack redoStack = {8, -1};
 
-bool isEmpty(){
-    if(undoStack.top == -1){
-        return true;
-    }
-    return false;
-}
 bool isFull(){
     if(undoStack.top == undoStack.maxSize){
         return true;
@@ -32,7 +26,7 @@ void pushToStack(int fieldNumber){
     }    
 }
 int popFromUndoStack(){
-    if(!isEmpty()){
+    if(undoStack.top > -1){
         int fieldNumber = undoStack.stack[undoStack.top];
 
         redoStack.top++;
@@ -55,4 +49,7 @@ int popFromRedoStack(){
     }    
     return -1;
 }
-
+void cleanBothStacks(){
+    undoStack.top = -1;
+    redoStack.top = -1;    
+}

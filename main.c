@@ -2,11 +2,25 @@
 #include <conio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
 
+#include "input-gathering.h"
 #include "stack.h"
 #include "utils.h"
 #include "structures.h"
+
+/**
+ * For input gathering 
+ * */
+#define MAIN 0
+#define DETERMINE_PLAYERS 1
+#define DETERMINE_MARKS 2
+#define GAME_ACTION 3
+#define GAME_REPLAY 4
+#define STOP_REPLAY 5
+
 const int gameSize = 3;
 int turn = 1;
 
@@ -38,10 +52,11 @@ void printGameboard(){
     
 }
 void printStartMenu(){
-    printf(" Welcome to final and superior TicTacToe game, choose : \n");
+    printf("\n Welcome to final and superior TicTacToe game, choose : \n");
+    printf(" 0 - to exit\n");
     printf(" 1 - to start new game\n");
     printf(" 2 - to replay one of old matches\n");
-    printf(" Your choice : ");
+    printf(" Your choice : ");    
 }
 void printGameMenu(){
     printf("\n %s turn\n Choose field by writing 'A1', '2C' etc\n", currentPlayer.name);
@@ -49,7 +64,16 @@ void printGameMenu(){
     printf(" or type 'redo' to cancel revert \n");
     printf(" or type 'exit' to finish :   ");
 }
-
+/**
+ * Remove all marks from gameboard, clean stacks, reset turn counter
+*/
+void cleanAfterMatch(){
+    for(int i = 0; i < 9; i++){
+        gb.fields[i].mark = ' ';
+    }
+    cleanBothStacks();
+    turn = 1;
+}
 /**
  * Ask players for names and assign marks
  * 
@@ -58,36 +82,27 @@ void printGameMenu(){
 void determinePlayers(){
 
     //Player1
-    printf(" Welcome, Player 1 please insert your name:   ");    
-    fgets(p1.name, 20, stdin);
-    flushAfterString(p1.name);    
-    if(isStringEmpty(p1.name)){
+    printf(" Welcome, Player 1 please insert your name:   ");       
+    if(centralInputGatheringUnit(DETERMINE_PLAYERS, p1.name) == 0){
         strcpy(p1.name, "Player1");
         printf(" Inserted name is not valid, you have been assigned name 'Player 1'\n");    
     }  
 
-    printf(" Would you like noughts('O') or crosses('X')? \n Enter 'O' or 'X':    ");      
-    p1.mark = getchar();
-    flushAfterChar(p1.mark);
-    
-    if(p1.mark == 'o' || p1.mark == 'O' || p1.mark == '0'){
-        p1.mark = 'O';
-    }
-    else if(p1.mark == 'x' || p1.mark == 'X'){
-        p1.mark = 'X';
-    }    
-    else{
+    printf(" Would you like noughts('O') or crosses('X')? \n Enter 'O' or 'X':    ");       
+    int mark = centralInputGatheringUnit(DETERMINE_MARKS);
+    if(mark == 0){        
         p1.mark = 'X';
         printf("\n Inserted character is invalid, you have been assigned crosses 'X'\n");
-    }    
+    }
+    else{
+        p1.mark = mark;
+    }  
 
     //Player2
-    printf("\n Player 2 please insert your name:   ");    
-    fgets(p2.name, 20, stdin);
-    flushAfterString(p2.name);     
-    if(isStringEmpty(p2.name)){
+    printf("\n Player 2 please insert your name:   ");       
+    if(centralInputGatheringUnit(DETERMINE_PLAYERS, p2.name) == 0){
         strcpy(p2.name, "Player2");
-        printf("Inserted name is not valid, you have been assigned name 'Player 2'\n"); 
+        printf(" Inserted name is not valid, you have been assigned name 'Player 2'\n"); 
     }
     //If Player1 chose crosses than Player2 will be assigned noughts
     if(p1.mark == 'X'){
@@ -99,53 +114,6 @@ void determinePlayers(){
     printf(" You have been assigned %c\n",p2.mark);
 }
 
-/**
- * Validate field to be marked
- * 
- * @param string to be validated
- * @result : 
- *      -1 for invalid input
- *     0-8 for valid
-*/
-int validateMarkInput(char *move){
-    if(strlen(move) != 2){
-        return -1;
-    }    
-    int row;
-    int col;
-    int result = 0;
-    if(isalpha(move[0])){        
-        move[0] = toupper(move[0]);    
-    }
-    else if(isalpha(move[1])){
-        move[1] = toupper(move[1]); 
-    }   
-   
-    if( move[0] >= 'A' && move[0] <= 'C' && move[1] >= '1' && move[1] <= '3'){            
-        row = 1;
-        col = 0;                      
-    }
-    else if (move[1] >= 'A' && move[1] <= 'C' && move[0] >= '1' && move[0] <= '3'){
-        row = 0;
-        col = 1;  
-    }
-    else
-    {
-        return -1;
-    }        
-    for(int i = 'A'; i <= 'C' ;i++){
-        if(move[col] == i){
-            result += i - 'A';
-        }
-    }
-    for(int i = '1'; i <= '3'; i++){
-        if(move[row] == i){
-            result += (i - '1') * 3;
-        }
-    }            
-    
-    return result; 
-}
 /**
  * Calculate current player based on a turn
  * 
@@ -165,9 +133,7 @@ void calcCurrentPlayer(int turn){
  * @param gameboard, field to mark, mark type
 */
 void applyMarkToGameBoard(int fieldNum){    
-    gb.fields[fieldNum].mark = currentPlayer.mark;   
-
-    addToHistoryFile("MOVE", fieldNum, currentPlayer.mark, currentPlayer.name);
+    gb.fields[fieldNum].mark = currentPlayer.mark;    
     pushToStack(fieldNum);              
 }
 /**
@@ -176,8 +142,7 @@ void applyMarkToGameBoard(int fieldNum){
  * @return true if revert was succesfull
 */
 bool undoTurn(){
-    if(turn > 1){
-        addToHistoryFile("UNDO");
+    if(turn > 1){        
         int fieldNum = popFromUndoStack();
         gb.fields[fieldNum].mark = ' ';
         turn = turn - 2;
@@ -194,8 +159,7 @@ bool undoTurn(){
 */
 bool redoTurn(){    
     int fieldNum = popFromRedoStack();
-    if(fieldNum != -1){
-        addToHistoryFile("REDO");
+    if(fieldNum != -1){        
         gb.fields[fieldNum].mark = currentPlayer.mark;
         return true;
     }
@@ -249,80 +213,223 @@ bool didAnyoneWin(){
     }    
     return false;
 }
+
+struct single_game_info* catalog;
+struct single_move_details* gameplay;
+int gameplaySize;
+
+/**
+ * Read gameplay id and line position in file
+ * 
+ * @return 
+ *  -   0 if file not exist, is empty
+ *  -   number of lines
+*/  
+int readTitlesFromHistoryFile(){
+    FILE *stream;
+    stream = fopen("./data/history.txt", "r");
+    int maxCatalogId = 0;
+    if(stream == NULL){        
+        return maxCatalogId;             
+    }
+    else{             
+        catalog = malloc(sizeof(struct single_game_info));     
+        char temp[80];
+        for(int lineNumber = 0; fgets(temp, 80, stream) != NULL; lineNumber++){                     
+            if(strcmp(temp, "START_HEADER\n") == 0){
+                fgets(temp, 80, stream);
+                printf(" %u  -   %s",maxCatalogId ,temp);                
+                catalog[maxCatalogId].id = maxCatalogId;
+                catalog[maxCatalogId].lineNumber = lineNumber + 2;                  
+
+                const char s[2] = "-";
+                char *token;
+                token = strtok(temp, s);
+                token = strtok(NULL, s);
+                sscanf(token, "%s '%c' %s '%c'", catalog[maxCatalogId].name1,&(catalog[maxCatalogId]).mark1, catalog[maxCatalogId].name2, &(catalog[maxCatalogId]).mark2);
+                                
+                maxCatalogId++;
+                lineNumber++;
+                catalog = realloc(catalog,((maxCatalogId+1) * sizeof(struct single_game_info)));                 
+            }            
+        }                    
+    }         
+    fclose(stream);
+    return maxCatalogId;
+}
+/**
+ * Read moves from file for particular gameplay
+ * 
+ * @param line to start reading from
+*/
+void readGameDetailsFromHistoryFile(int line){
+    FILE *stream;
+    stream = fopen("./data/history.txt", "r");
+    char temp[80];
+    int initialSize = 10;
+    int index = 0;
+    gameplay = malloc(initialSize * sizeof(struct single_move_details));
+    gameplaySize = 0;
+    for(int i = 0; fgets(temp, 80, stream) != NULL; i++){              
+        if(i < line){
+            continue;
+        }
+        else if(strcmp(temp, "START_HEADER\n") == 0){
+            break;
+        }
+        else{            
+            if(index % 10 == 0){
+                gameplay = realloc(gameplay, (initialSize+index+1) * sizeof(struct single_move_details));                
+            }
+            gameplaySize++;
+            if(strcmp(temp,"UNDO\n") == 0){
+                strcpy(gameplay[index].action,"UNDO");                
+            }
+            else if(strcmp(temp,"REDO\n") == 0){
+                strcpy(gameplay[index].action,"REDO");
+            }
+            else{                
+                strcpy(gameplay[index].action,"MOVE");                
+                sscanf(temp, "%d", &(gameplay[index]).field);                 
+            }
+            index++;
+        }        
+    }
+
+    fclose(stream);
+}
+
+
 int main()
 {
     printf("\n\n---------------------Game started--------------------- \n\n");    
-    printStartMenu();
-    char choice = getchar();
-    flushAfterChar(choice);
-    if(choice == '2' && readTitlesFromHistoryFile() == true){
-        
-    }
-    else{
-        determinePlayers();
-        bool exit = false;  
-        addToHistoryFile("START_HEADER");
-        addToHistoryFile("HEADER",p1.name, p1.mark);
-        addToHistoryFile("HEADER",p2.name, p2.mark);     
-        addToHistoryFile("START_GAME");          
-        do{          
-            char field[5];
-            calcCurrentPlayer(turn);       
-            printPlayers(p1, p2);
-            printGameboard(gb);
-            //If move will be invalid app will ask for new input
-            bool moveIsValid;
-            
-            printGameMenu();
-            do{                    
-                fgets(field, 5, stdin);
-                flushAfterString(field);
-
-                int fieldNum = validateMarkInput(field);
-                if(fieldNum != -1){                
-                    if(fieldNotMarked(fieldNum)){
+    
+    
+    do{
+        bool exit = false;
+        printStartMenu();
+        int choice = centralInputGatheringUnit(MAIN);
+        if( choice == 0){
+            break;
+        }        
+        else if(choice == 1){
+            determinePlayers();             
+            addToHistoryFile("START_HEADER");
+            addToHistoryFile("HEADER",p1.name, p1.mark);
+            addToHistoryFile("HEADER",p2.name, p2.mark);                  
+            do{          
+                char field[5];
+                calcCurrentPlayer(turn);       
+                printPlayers(p1, p2);
+                printGameboard(gb);                
+                bool moveIsValid;
+                
+                printGameMenu();
+                do{                                         
+                    int fieldNum = centralInputGatheringUnit(GAME_ACTION);
+                    if(fieldNum == 11){
                         moveIsValid = true;
-                        applyMarkToGameBoard(fieldNum);                    
-                        if(didAnyoneWin()){
-                            printGameboard();
-                            printf(" %s congratulations! You won\n", currentPlayer.name);
-                            exit = true;
-                        }
+                        exit = true;                
                     }
+                    else if(fieldNum == 10){
+                        moveIsValid = redoTurn();
+                        if(moveIsValid){
+                            addToHistoryFile("REDO");
+                        }    
+                    }
+                    else if(fieldNum == 9){
+                        moveIsValid = undoTurn(); 
+                        if(moveIsValid){
+                            addToHistoryFile("UNDO");
+                        }               
+                    }                    
+                    else if(fieldNum != -1){                
+                        if(fieldNotMarked(fieldNum)){
+                            moveIsValid = true;
+                            applyMarkToGameBoard(fieldNum);
+                            addToHistoryFile("MOVE", fieldNum, currentPlayer.mark, currentPlayer.name);                    
+                            if(didAnyoneWin()){
+                                printGameboard();
+                                printf(" %s congratulations! You won\n", currentPlayer.name);
+                                exit = true;
+                            }
+                        }
+                        else{
+                            printf(" Choose other field, this is already marked :   ");
+                            moveIsValid = false;
+                        }                
+                    }                  
                     else{
-                        printf(" Choose other field, this is already marked :   ");
+                        printf(" Please insert correct field number :   ");
                         moveIsValid = false;
-                    }                
+                    }
+                }while(!moveIsValid);
+                
+                turn += 1;
+                if(turn == 10){
+                    printf(" Game finished in a tie");
+                    exit = true;
                 }
-                else if(strcmp(field, "exit") == 0 || strcmp(field, "EXIT") == 0){
-                    moveIsValid = true;
-                    exit = true;                
-                }
-                else if(strcmp(field, "undo") == 0 || strcmp(field, "UNDO") == 0){
-                    moveIsValid = undoTurn();                
-                }
-                else if(strcmp(field, "redo") == 0 || strcmp(field, "REDO") == 0){
-                    moveIsValid = redoTurn();
+            }while(exit != true);
+            cleanAfterMatch();            
+        }   
+        else if(choice == 2){
+            int size = readTitlesFromHistoryFile();            
+            if(size > 0){                
+                printf("\n Please choose game to replay by typing number :   ");            
+                int choice = centralInputGatheringUnit(GAME_REPLAY);         
+
+                if(choice >= 0 && choice < size){                                  
+                    readGameDetailsFromHistoryFile(catalog[choice].lineNumber);
+                    strcpy(p1.name,catalog[choice].name1);
+                    strcpy(p2.name,catalog[choice].name2);                   
+                    p1.mark = catalog[choice].mark1;
+                    p2.mark = catalog[choice].mark2;
+                    for(int i = 0; i < gameplaySize; i++){
+                        printf("\n Enter 0 to stop, anything else to continue");
+                        char c = centralInputGatheringUnit(STOP_REPLAY);
+                        if(c == '0'){
+                            break;
+                        }                      
+                        calcCurrentPlayer(turn);                           
+                        if(strcmp(gameplay[i].action, "UNDO") == 0){
+                            bool temp1 = undoTurn();
+                        }
+                        else if(strcmp(gameplay[i].action, "REDO") == 0 ){
+                            bool temp2 = redoTurn();
+                        }
+                        else{
+                            int fieldNum = gameplay[i].field;
+                            gb.fields[fieldNum].mark = currentPlayer.mark;
+                            pushToStack(fieldNum);   
+                        }
+                        printPlayers(p1, p2);
+                        printGameboard(gb);
+                        turn++;
+                    }
+                    if(didAnyoneWin()){                        
+                        printf(" %s congratulations! You won\n", currentPlayer.name);                        
+                    }
+                    else if(turn == 10){
+                        printf(" Game finished in a tie");
+                    }
                 }
                 else{
-                    printf(" Please insert correct field number :   ");
-                    moveIsValid = false;
-                }
-            }while(!moveIsValid);
-            
-            turn += 1;
-            if(turn == 10){
-                printf(" Game finished in a tie");
-                exit = true;
+                    printf(" No records to display, choose other number\n");
+                }                
             }
-        }while(exit != true);    
-        addToHistoryFile("END_GAME");
-    } 
-    
-
-
-
+            else{
+                printf(" No records to display, choose other number\n");
+            }            
+            cleanAfterMatch();
+        }
+        else{
+            printf(" Wrong choice, type number again");
+        }         
+    }while(1); 
     printf("\n\n---------------------Game finished--------------------- \n\n");
+    free(catalog); 
+    free(gameplay);
     return 0;
 }
 
