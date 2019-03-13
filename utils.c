@@ -45,7 +45,7 @@ char* getCurrentTime(){
 */
 void addToHistoryFile(char *action, ...){        
     FILE *file;
-    file = fopen("./data/history.txt", "a");    
+    file = fopen("./history.txt", "a");    
 
     va_list v;
     va_start(v, action);
