@@ -227,7 +227,7 @@ int gameplaySize;
 */  
 int readTitlesFromHistoryFile(){
     FILE *stream;
-    stream = fopen("./data/history.txt", "r");
+    stream = fopen("./history.txt", "r");
     int maxCatalogId = 0;
     if(stream == NULL){        
         return maxCatalogId;             
@@ -264,7 +264,7 @@ int readTitlesFromHistoryFile(){
 */
 void readGameDetailsFromHistoryFile(int line){
     FILE *stream;
-    stream = fopen("./data/history.txt", "r");
+    stream = fopen("./history.txt", "r");
     char temp[80];
     int initialSize = 10;
     int index = 0;
