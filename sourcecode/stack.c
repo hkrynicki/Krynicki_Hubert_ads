@@ -49,6 +49,9 @@ int popFromRedoStack(){
     }    
     return -1;
 }
+/**
+ * Reset counter on both stacks, used when user play one game after another
+*/
 void cleanBothStacks(){
     undoStack.top = -1;
     redoStack.top = -1;    
